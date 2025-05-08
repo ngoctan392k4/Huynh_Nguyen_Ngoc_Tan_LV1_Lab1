@@ -17,16 +17,22 @@ def insert_data():
                     # check if the file is json type or not
                     if file.endswith('.json'):
                         path = os.path.join('output', file)
-                        with open (path, "r", encoding='utf-8') as readfile:
-                            products = json.load(readfile)
-                            for product in products:
-                                cur.execute(sql, (product.get("id"),
-                                        product.get("name"),
-                                        product.get("url_key"),
-                                        product.get("price"),
-                                        product.get("description"),
-                                        product.get("images")))
-                            conn.commit()
+                        try: # Exception Handling when opening and reading
+                            with open (path, "r", encoding='utf-8') as readfile:
+                                products = json.load(readfile)
+                                for product in products:
+                                    try: # Exception Handling when inserting products into database
+                                        cur.execute(sql, (product.get("id"),
+                                                product.get("name"),
+                                                product.get("url_key"),
+                                                product.get("price"),
+                                                product.get("description"),
+                                                product.get("images")))
+                                    except (psycopg2.DatabaseError, Exception) as insert_err:
+                                        print(f"Error when inserting product ID {product.get("id")}")
+                                conn.commit()
+                        except (json.JSONDecodeError) as j_err:
+                            print(f"Error when opening and reading {path}: {j_err}")
     except (psycopg2.DatabaseError, Exception) as error:
         print(error)
 
